@@ -1,1 +1,1 @@
-# computational-newbie
+# computational-notes
