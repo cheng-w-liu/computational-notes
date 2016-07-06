@@ -1,0 +1,34 @@
+\documentclass{article}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage[margin=0.5in]{geometry}
+
+\newcommand{\bs}{\boldsymbol}
+\begin{document}
+\noindent
+Suppose $\boldsymbol{x} \in \mathbb{R}^{D_x}$, and $\boldsymbol{y} \in \mathbb{R}^{D_y}$ is a noisy measurement of $\boldsymbol{x}$. Assume the following prior of $\boldsymbol{x}$ and likelihood $p(\boldsymbol{y} | \boldsymbol{x})$:
+\begin{equation*}
+\boxed{
+\begin{array}{r c l}
+p(\boldsymbol{x}) &=& \mathcal{N} (\boldsymbol{x}| \boldsymbol{\mu_x}, \boldsymbol{\Sigma_x}) \\
+&& \\
+p(\boldsymbol{y} | \boldsymbol{x}) &=& \mathcal{N} (\boldsymbol{y} | \boldsymbol{A} \boldsymbol{x} + \boldsymbol{b}, \boldsymbol{\Sigma_y}) 
+\end{array}
+}
+\end{equation*}
+\noindent
+Then the posterior $p(\bs{x} | \bs{y})$ can be written as
+\begin{equation*}
+\boxed{
+\begin{array}{r c l}
+p(\boldsymbol{x} | \boldsymbol{y}) &=& \mathcal{N} (\bs{x} | \bs{\mu_{x|y}}, \bs{\Sigma_{x|y}}) \\
+&& \\
+\bs{\Sigma^{-1}_{x|y}} &=& \bs{\Sigma_{x}^{-1}} + \bs{A^T \Sigma_{y}^{-1} A} \\
+&& \\
+\bs{\mu_{x|y}} &=& \bs{\Sigma_{x|y}} \big[ \bs{A^T \Sigma_{y}^{-1} (y - b) + \Sigma_x^{-1} \mu_x} \big]
+\end{array}
+}
+\end{equation*}
+
+\end{document}
+\end{gaussian}

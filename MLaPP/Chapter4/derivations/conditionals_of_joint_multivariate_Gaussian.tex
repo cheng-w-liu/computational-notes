@@ -1,0 +1,133 @@
+\documentclass{article}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage[margin=0.5in]{geometry}
+
+\begin{document}
+\noindent
+Derivation of the conditional probabilities of multivariate Gaussian distribution $\textbf{x}$: $p(\textbf{x}) = p(\textbf{x}_1, \textbf{x}_2)$.
+Suppose $\textbf{x} = (\textbf{x}_1, \textbf{x}_2)$ is jointly Gaussian:
+\begin{equation*}
+\mu = \begin{pmatrix} \mu_1 \\ \mu_2 \end{pmatrix}, \hspace{10pt} \Sigma = \begin{pmatrix} \Sigma_{11} & \Sigma_{12} \\ \Sigma_{21} & \Sigma_{22}  \end{pmatrix}, \hspace{10pt} \Lambda = \Sigma^{-1} = \begin{pmatrix} \Lambda_{11} & \Lambda_{12} \\ \Lambda_{21} & \Lambda_{22}  \end{pmatrix}
+\end{equation*}
+The marginal probabilities are:
+\begin{eqnarray*}
+p(\textbf{x}_1) &=& \mathcal{N} (\textbf{x}_1 \hspace{1pt} | \hspace{1pt} \mu_1, \Sigma_{11}) \\
+p(\textbf{x}_2) &=& \mathcal{N} (\textbf{x}_2 \hspace{1pt} | \hspace{1pt} \mu_2, \Sigma_{22}) 
+\end{eqnarray*}
+the conditional probabilities are:
+\begin{equation}
+\boxed{
+\begin{array}{r c l }
+p(\textbf{x}_1 | \textbf{x}_2) &=& \mathcal{N} (\textbf{x}_1 \hspace{1pt} | \hspace{1pt} \mu_{1 | 2}, \Sigma_{1 | 2}) \\
+\\
+\mu_{1 | 2} &=& \mu_1 + \Sigma_{12} \Sigma_{22}^{-1} (\textbf{x}_2 - \mu_2) \\
+&=& \mu_1 - \Lambda_{11}^{-1} \Lambda_{12} (\textbf{x}_2 - \mu_2) \\
+&=& \Sigma_{1 | 2} (\Lambda_{11} \mu_1 - \Lambda_{12} (\textbf{x}_2 - \mu_2)) \\
+\\
+\Sigma_{1 | 2} &=& \Sigma_{11} - \Sigma_{12} \Sigma_{22}^{-1} \Sigma_{21} \\
+&=& \Lambda_{11}^{-1}
+\end{array}
+}
+\end{equation}
+
+%\begin{eqnarray*}
+%p(\textbf{x}_1 | \textbf{x}_2) &=& \mathcal{N} (\textbf{x}_1 \hspace{1pt} | \hspace{1pt} \mu_{1 | 2}, \Sigma_{1 | 2}) \\
+%\mu_{1 | 2} &=& \mu_1 + \Sigma_{12} \Sigma_{22}^{-1} (\textbf{x}_2 - \mu_2) 
+%\end{eqnarray*}
+
+\noindent
+\textit{Proof}: \\
+\newline
+\noindent
+\textbf{Part 1.} derive $\mu_{1 | 2}$ and $\Sigma_{1 | 2}$
+
+\noindent
+use the following equality to transform $\Sigma$:
+\begin{equation*}
+M^{-1} = \begin{pmatrix} E & F \\ G & H \end{pmatrix}^{-1} = \begin{pmatrix} I & 0 \\ -H^{-1} G & I \end{pmatrix}   \begin{pmatrix} (M/H)^{-1} & 0 \\ 0 & H^{-1}  \end{pmatrix}   \begin{pmatrix} I & -F H^{-1} \\ 0 & I \end{pmatrix}
+\end{equation*}
+where
+\begin{equation*}
+M/H \equiv E - F H^{-1} G
+\end{equation*}
+By a simple substitution:
+\begin{equation*}
+M \rightarrow \Sigma, \hspace{10pt} E \rightarrow \Sigma_{11}, \hspace{10pt} F \rightarrow \Sigma_{12},  \hspace{10pt} G \rightarrow \Sigma_{21},  \hspace{10pt} H \rightarrow \Sigma_{22}
+\end{equation*}
+
+\begin{equation*}
+\Sigma^{-1} = \begin{pmatrix} \Sigma_{11} & \Sigma_{12} \\ \Sigma_{21} & \Sigma_{22} \end{pmatrix}^{-1} = \begin{pmatrix} I & 0 \\ - \Sigma_{22}^{-1} \Sigma_{21} & I \end{pmatrix} \begin{pmatrix} (\Sigma/\Sigma_{22})^{-1} & 0 \\ 0 & \Sigma_{22}^{-1} \end{pmatrix} \begin{pmatrix} I & -\Sigma_{12} \Sigma_{22}^{-1} \\ 0 & I \end{pmatrix}
+\end{equation*}
+\newline
+\noindent
+Therefore, $p(\textbf{x}) = p(\textbf{x}_1, \textbf{x}_2)$:
+
+\begin{eqnarray}
+p(\textbf{x}_1, \textbf{x}_2) & \propto & \exp{\Bigg\{- \dfrac{1}{2} \begin{pmatrix} \textbf{x}_1 - \mu_1 \\ \textbf{x}_2 - \mu_2 \end{pmatrix}^{T}  \begin{pmatrix} I & 0 \\ - \Sigma_{22}^{-1} \Sigma_{21} & I \end{pmatrix} \begin{pmatrix} (\Sigma/\Sigma_{22})^{-1} & 0 \\ 0 & \Sigma_{22}^{-1} \end{pmatrix} \begin{pmatrix} I & -\Sigma_{12} \Sigma_{22}^{-1} \\ 0 & I \end{pmatrix}   \begin{pmatrix} \textbf{x}_1 - \mu_1 \\ \textbf{x}_2 - \mu_2 \end{pmatrix} \Bigg\}}  \nonumber \\
+&=& \exp{\Bigg\{- \dfrac{1}{2} \big( (\textbf{x}_1 - \mu_1)^{T}, (\textbf{x}_2 - \mu_2)^{T} \big)  \Bigg\}  \begin{pmatrix} I & 0 \\ - \Sigma_{22}^{-1} \Sigma_{21} & I \end{pmatrix} \begin{pmatrix} (\Sigma/\Sigma_{22})^{-1} & 0 \\ 0 & \Sigma_{22}^{-1} \end{pmatrix} \begin{pmatrix} (\textbf{x}_1 - \mu_1) - \Sigma_{12} \Sigma_{22}^{-1} (\textbf{x}_2 - \mu_2) \\  (\textbf{x}_2 - \mu_2) \end{pmatrix} \Bigg\}}  \nonumber \\
+&=& \exp{\Bigg\{-\dfrac{1}{2} \big( (\textbf{x}_1 - \mu_1)^{T} - (\textbf{x}_2 - \mu_2)^{T} \Sigma_{22}^{-1} \Sigma_{21}, (\textbf{x}_2 - \mu_2)^{T}  \big) \begin{pmatrix} (\Sigma/\Sigma_{22})^{-1} \big( \textbf{x}_1 - \mu_1 - \Sigma_{12} \Sigma_{22}^{-1} (\textbf{x}_2 - \mu_2) \big) \\ \Sigma_{22}^{-1}(\textbf{x}_2 - \mu_2) \end{pmatrix} \Bigg\}} \nonumber \\
+&=& \exp{\Bigg\{-\dfrac{1}{2} \big( \underbrace{(\textbf{x}_1 - \mu_1)^{T} - (\textbf{x}_2 - \mu_2)^{T} \Sigma_{22}^{-1} \Sigma_{21}}_{(\textbf{x}_1 - \mu_1)^{T} - \big[ (\Sigma_{22}^{-1} \Sigma_{21})^{T} (\textbf{x}_2 - \mu_2) \big]^{T} }, (\textbf{x}_2 - \mu_2)^{T}  \big) \begin{pmatrix} (\Sigma/\Sigma_{22})^{-1} \big( \textbf{x}_1 - \mu_1 - \Sigma_{12} \Sigma_{22}^{-1} (\textbf{x}_2 - \mu_2) \big) \\ \Sigma_{22}^{-1}(\textbf{x}_2 - \mu_2) \end{pmatrix} \Bigg\}} \nonumber \\
+&=& \exp{\Bigg\{-\dfrac{1}{2} \bigg( \big( \textbf{x}_1 - \mu_1 - \Sigma_{12} \Sigma_{22}^{-1} (\textbf{x}_2 - \mu_2) \big)^{T}, (\textbf{x}_2 - \mu_2)^{T}  \bigg) \begin{pmatrix} (\Sigma/\Sigma_{22})^{-1} \big( \textbf{x}_1 - \mu_1 - \Sigma_{12} \Sigma_{22}^{-1} (\textbf{x}_2 - \mu_2) \big) \\ \Sigma_{22}^{-1}(\textbf{x}_2 - \mu_2) \end{pmatrix} \Bigg\}} \nonumber \\ 
+&=& \exp{\Bigg[-\dfrac{1}{2} (\textbf{x}_1 - \mu_1 - \Sigma_{12} \Sigma_{22}^{-1} (\textbf{x}_2 - \mu_2))^{T} (\Sigma/\Sigma_{22})^{-1} (\textbf{x}_1 - \mu_1 - \Sigma_{12} \Sigma_{22}^{-1} (\textbf{x}_2 - \mu_2)) \Bigg]} \exp{\Bigg[ -\dfrac{1}{2} (\textbf{x}_2 - \mu_2)^{T} \Sigma_{22}^{-1} (\textbf{x}_2 - \mu_2) \Bigg]} \nonumber \\
+& \propto & \mathcal{N}(\textbf{x}_1 \hspace{1pt} | \hspace{1pt} \mu_{1|2}, \Sigma_{1|2}) \times \mathcal{N}(\textbf{x}_2 \hspace{1pt} | \hspace{1pt} \mu_{2}, \Sigma_{22}) \nonumber
+\end{eqnarray}
+\newline
+\noindent
+where
+\begin{eqnarray*}
+\mu_{1 | 2} &=& \mu_1 + \Sigma_{12} \Sigma_{22}^{-1} (\textbf{x}_2 - \mu_2) \\
+\Sigma_{1 | 2} &=& \Sigma/\Sigma_{22} = \Sigma_{11} - \Sigma_{12} \Sigma_{22}^{-1} \Sigma_{21}
+\end{eqnarray*}
+
+%\begin{eqnarray}
+%p(\textbf{x}_1, \textbf{x}_2) \propto \exp{\Bigg\{- \dfrac{1}{2} \begin{pmatrix} \textbf{x}_1 - \mu_1 \\ \textbf{x}_2 - \mu_2 \end{pmatrix}^{T}  \begin{pmatrix} I & 0 \\ - \Sigma_{22}^{-1} \Sigma_{21} & I \end{pmatrix} \begin{pmatrix} (\Sigma/\Sigma_{22})^{-1} & 0 \\ 0 & \Sigma_{22}^{-1} \end{pmatrix} \begin{pmatrix} I & -\Sigma_{12} \Sigma_{22}^{-1} \\ 0 & I \end{pmatrix}   \begin{pmatrix} \textbf{x}_1 - \mu_1 \\ \textbf{x}_2 - \mu_2 \end{pmatrix} \Bigg\}} & \nonumber \\
+%= \exp{\Bigg\{- \dfrac{1}{2} \big( (\textbf{x}_1 - \mu_1)^{T}, (\textbf{x}_2 - \mu_2)^{T} \big)  \Bigg\}  \begin{pmatrix} I & 0 \\ - \Sigma_{22}^{-1} \Sigma_{21} & I \end{pmatrix} \begin{pmatrix} (\Sigma/\Sigma_{22})^{-1} & 0 \\ 0 & \Sigma_{22}^{-1} \end{pmatrix} \begin{pmatrix} (\textbf{x}_1 - \mu_1) - \Sigma_{12} \Sigma_{22}^{-1} (\textbf{x}_2 - \mu_2) \\  (\textbf{x}_2 - \mu_2) \end{pmatrix} \Bigg\}} & \nonumber \\
+%= \exp{\Bigg\{-\dfrac{1}{2} \big( (\textbf{x}_1 - \mu_1)^{T} - (\textbf{x}_2 - \mu_2)^{T} \Sigma_{22}^{-1} \Sigma_{21}, (\textbf{x}_2 - \mu_2)^{T}  \big) \begin{pmatrix} (\Sigma/\Sigma_{22})^{-1} \big( \textbf{x}_1 - \mu_1 - \Sigma_{12} \Sigma_{22}^{-1} (\textbf{x}_2 - \mu_2) \big) \\ \Sigma_{22}^{-1}(\textbf{x}_2 - \mu_2) \end{pmatrix} \Bigg\}} & \nonumber \\
+%\end{eqnarray}
+
+
+%\begin{eqnarray*}
+%p(\textbf{x}_1, \textbf{x}_2) & \propto & \exp{\Bigg\{- \dfrac{1}{2} \begin{pmatrix} \textbf{x}_1 - \mu_1 \\ \textbf{x}_2 - \mu_2 \end{pmatrix}^{T}  \begin{pmatrix} I & 0 \\ - \Sigma_{22}^{-1} \Sigma_{21} & I \end{pmatrix} \begin{pmatrix} (\Sigma/\Sigma_{22})^{-1} & 0 \\ 0 & \Sigma_{22}^{-1} \end{pmatrix} \begin{pmatrix} I & -\Sigma_{12} \Sigma_{22}^{-1} \\ 0 & I \end{pmatrix}   \begin{pmatrix} \textbf{x}_1 - \mu_1 \\ \textbf{x}_2 - \mu_2 \end{pmatrix} \Bigg\}} \\
+%&=& \exp{\Bigg\{- \dfrac{1}{2} \big( (\textbf{x}_1 - \mu_1)^{T}, (\textbf{x}_2 - \mu_2)^{T} \big)  \Bigg\}}  \begin{pmatrix} I & 0 \\ - \Sigma_{22}^{-1} \Sigma_{21} & I \end{pmatrix} \begin{pmatrix} (\Sigma/\Sigma_{22})^{-1} & 0 \\ 0 & \Sigma_{22}^{-1} \end{pmatrix} \begin{pmatrix} (\textbf{x}_1 - \mu_1) - \Sigma_{12} \Sigma_{22}^{-1} (\textbf{x}_2 - \mu_2) \\ \Sigma_{22}^{-1} (\textbf{x}_2 - \mu_2) \end{pmatrix} 
+%\end{eqnarray*}
+\newpage
+\noindent
+\textbf{Part 2.} derive other forms of $\mu_{1 | 2}$ and $\Sigma_{1 | 2}$.
+
+use the identity:
+\begin{equation*}
+M^{-1} = \begin{pmatrix} E & F \\ G & H \end{pmatrix}^{-1} = \begin{pmatrix} (M/H)^{-1} & - (M/H)^{-1} F H^{-1} \\ -H^{-1} G (M/H)^{-1} & H^{-1} + H^{-1} G (M/H)^{-1} F H^{-1} \end{pmatrix}, \hspace{10pt} M/H \equiv E - F H^{-1} G
+\end{equation*}
+
+By the following substitution:
+\begin{equation*}
+M \rightarrow \Sigma, \hspace{10pt} E \rightarrow \Sigma_{11}, \hspace{10pt} F \rightarrow \Sigma_{12},  \hspace{10pt} G \rightarrow \Sigma_{21},  \hspace{10pt} H \rightarrow \Sigma_{22}
+\end{equation*}
+
+\begin{eqnarray*}
+\Sigma^{-1} &=& \begin{pmatrix} \Sigma_{11} & \Sigma_{12} \\ \Sigma_{21} & \Sigma_{22} \end{pmatrix}^{-1}  =  \begin{pmatrix} (\Sigma/\Sigma_{22})^{-1} & -(\Sigma/\Sigma_{22})^{-1}) \Sigma_{12} \Sigma_{22}^{-1} \\ -\Sigma_{22}^{-1} \Sigma_{21} (\Sigma/\Sigma_{22})^{-1} & \Sigma_{22}^{-1} + \Sigma_{22}^{-1} \Sigma_{21} (\Sigma/\Sigma_{22})^{-1} \Sigma_{12} \Sigma_{22}^{-1} \end{pmatrix} \\
+= \Lambda  &= & \begin{pmatrix} \Lambda_{11} & \Lambda_{12} \\ \Lambda_{21} & \Lambda_{22} \end{pmatrix} 
+\end{eqnarray*}
+
+Therefore
+\begin{equation*}
+\underline{\Lambda_{11}^{-1} \Lambda_{12}} = (\Sigma/\Sigma_{22})^{-1} \big[ - (\Sigma/\Sigma_{22})^{-1} \Sigma_{12} \Sigma_{22}^{-1} \big] = \underline{\Sigma_{12} \Sigma_{22}^{-1}}
+\end{equation*}
+
+\begin{equation*}
+\Lambda_{11} = (\Sigma/\Sigma_{22})^{-1} = \big( \Sigma_{11} - \Sigma_{12} \Sigma_{22}^{-1} \Sigma_{21} \big)^{-1} = \Sigma_{1 | 2}^{-1}
+\end{equation*}
+
+\begin{equation*}
+\Rightarrow \underline{\Sigma_{11} - \Sigma_{12} \Sigma_{22}^{-1} \Sigma_{21} = \Lambda_{11}^{-1}} = \Sigma_{1 | 2}
+\end{equation*}
+
+\begin{eqnarray*}
+\mu_1 - \Lambda_{11}^{-1} \Lambda_{12} (\textbf{x}_2 - \mu_2) &=& \Lambda_{11}^{-1} \Lambda_{11} \mu_1 - \Lambda_{11}^{-1} \Lambda_{12} (\textbf{x}_2 - \mu_2) \\
+&=& \Lambda_{11}^{-1} \big[ \Lambda_{11} \mu_1 - \Lambda_{12} (\textbf{x}_2 - \mu_2) \big] \\
+&=& \underline{\Sigma_{1 | 2} \big[ \Lambda_{11} \mu_1 - \Lambda_{12} (\textbf{x}_2 - \mu_2) \big]}
+\end{eqnarray*}
+
+
+\end{document}
