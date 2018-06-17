@@ -4,13 +4,18 @@ from scipy.optimize import minimize
 from kernels import RBFKernel
 from gaussian_process import GaussianProcess
 
+
 class BayesianOptimization(object):
 
-    def __init__(self, score_func, bounds, epsilon=1e-7, gp_params=None):
+    def __init__(self, score_func, bounds, policy='ei', epsilon=1e-7, lambda_val=1.5, gp_params=None):
+
+        assert policy == 'ei' or policy =='ucb'
 
         self.score_func = score_func
         self.bounds = bounds
+        self.policy = policy
         self.epsilon = epsilon
+        self.lambda_val = lambda_val  # for ucb policy only
         if gp_params is not None:
             self.gp = GaussianProcess(**gp_params)
         else:
@@ -18,9 +23,9 @@ class BayesianOptimization(object):
             length_scale = 0.5 * np.ones(n_params)
             bounds = np.tile(np.array([1e-2, 1e2]), (n_params, 1))
             kernel = RBFKernel(length_scale=length_scale, length_scale_bounds=bounds)
-            self.gp = GaussianProcess(kernel, alpha=0.02)
+            self.gp = GaussianProcess(kernel, alpha=0.03)
 
-    def fit(self, n_iter=10, x0=None, n_pre_samples=10, random_search=False):
+    def fit(self, n_iter=10, x0=None, n_pre_samples=5, random_search=False):
         """
         Apply Bayesian Optimization to find the optimal parameter
         """
@@ -47,16 +52,16 @@ class BayesianOptimization(object):
         X = np.atleast_2d(np.array(x_list))
         y = np.array(y_list)
 
-        for _ in range(n_iter):
+        for i in range(n_iter):
 
             self.gp.fit(X, y)
 
             if random_search:
                 x_candidates = np.random.uniform(self.bounds[:, 0], self.bounds[:, 1], size=(random_search, n_params))
-                ei = -self.negative_expected_improvement(x_candidates, y, n_params)
-                next_sample = x_candidates[np.argmax(ei)]
+                acquisitions = -self.acquisition_function(x_candidates, y, n_params, self.policy)
+                next_sample = x_candidates[np.argmax(acquisitions)]
             else:
-                next_sample = self.sample_next_hyperparameter(self.negative_expected_improvement, y, n_restart=10)
+                next_sample = self.sample_next_hyperparameter(self.acquisition_function, y, n_restart=10, policy=self.policy)
 
             if np.any(np.abs(next_sample - X) <= self.epsilon):
                 next_sample = np.random.uniform(self.bounds[:, 0], self.bounds[:, 1])
@@ -69,6 +74,15 @@ class BayesianOptimization(object):
 
         return X, y
 
+    def acquisition_function(self, X, y, n_params, policy):
+
+        if policy == 'ei':
+            return self.negative_expected_improvement(X, y, n_params)
+        elif self.policy == 'ucb':
+            return self.negative_upper_confidence_bound(X, y, n_params)
+        else:
+            raise ValueError("unknown policy {0:}".format(self.policy))
+
     def negative_expected_improvement(self, X, y, n_params):
 
         X = np.reshape(X, (-1, n_params))
@@ -76,13 +90,29 @@ class BayesianOptimization(object):
         mu, Sigma = self.gp.predict(X, return_cov=True)
         sigma = np.sqrt(np.diag(Sigma))
 
+        mu = mu.ravel()
+        sigma = sigma.ravel()
+
         f_best = np.max(y)
         Z = (mu - f_best) / sigma
         ei = (mu - f_best) * norm.cdf(Z) + sigma * norm.pdf(-Z)
         ei[sigma == 0.0] = 0.0
         return -ei
 
-    def sample_next_hyperparameter(self, acquisition_function, y, n_restart):
+    def negative_upper_confidence_bound(self, X, y, n_params):
+
+        X = np.reshape(X, (-1, n_params))
+
+        mu, Sigma = self.gp.predict(X, return_cov=True)
+        sigma = np.sqrt(np.diag(Sigma))
+
+        mu = mu.ravel()
+        sigma = sigma.ravel()
+
+        ucb = mu + self.lambda_val * sigma
+        return -ucb
+
+    def sample_next_hyperparameter(self, acquisition_function, y, n_restart, policy):
 
         n_params = self.bounds.shape[0]
         best_x = None
@@ -93,7 +123,7 @@ class BayesianOptimization(object):
                            x0=initial_value,
                            bounds=self.bounds,
                            method='L-BFGS-B',
-                           args=(y, n_params))
+                           args=(y, n_params, policy))
 
             if res.fun < best_acquisition_value:
                 best_acquisition_value = res.fun
@@ -104,11 +134,15 @@ class BayesianOptimization(object):
 
 class BayesianOptimization1dDemo(object):
 
-    def __init__(self, score_func, bounds, epsilon=1e-7, gp_params=None):
+    def __init__(self, score_func, bounds, policy='ei', epsilon=1e-7, lambda_val=1.5, gp_params=None):
+
+        assert policy == 'ei' or policy =='ucb'
 
         self.score_func = score_func
         self.bounds = bounds
+        self.policy = policy
         self.epsilon = epsilon
+        self.lambda_val = lambda_val  # for ucb policy only
         if gp_params is not None:
             self.gp = GaussianProcess(**gp_params)
         else:
@@ -116,7 +150,7 @@ class BayesianOptimization1dDemo(object):
             length_scale = 0.5 * np.ones(n_params)
             bounds = np.tile(np.array([1e-2, 1e2]), (n_params, 1))
             kernel = RBFKernel(length_scale=length_scale, length_scale_bounds=bounds)
-            self.gp = GaussianProcess(kernel, alpha=0.02)
+            self.gp = GaussianProcess(kernel, alpha=0.03)
 
     def fit(self, n_iter=10, x0=None, n_pre_samples=5, random_search=False):
         """
@@ -154,10 +188,10 @@ class BayesianOptimization1dDemo(object):
 
             if random_search:
                 x_candidates = np.random.uniform(self.bounds[:, 0], self.bounds[:, 1], size=(random_search, n_params))
-                ei = -self.negative_expected_improvement(x_candidates, y, n_params)
-                next_sample = x_candidates[np.argmax(ei)]
+                acquisitions = -self.acquisition_function(x_candidates, y, n_params, self.policy)
+                next_sample = x_candidates[np.argmax(acquisitions)]
             else:
-                next_sample = self.sample_next_hyperparameter(self.negative_expected_improvement, y, n_restart=10)
+                next_sample = self.sample_next_hyperparameter(self.acquisition_function, y, n_restart=10, policy=self.policy)
 
             # -------------------------------------------------------------------------------------------- #
             # plotting info
@@ -165,15 +199,16 @@ class BayesianOptimization1dDemo(object):
                 y_posterior, Sigma = self.gp.predict(np.reshape(evaluated_x_points, (-1, n_params)), return_cov=True)
                 sigma = np.sqrt(np.diag(Sigma))
 
-                neg_expected_improvements = self.negative_expected_improvement(evaluated_x_points, y, n_params)
+                acquisitions = self.acquisition_function(evaluated_x_points, y, n_params, self.policy)
 
                 selected_point = [next_sample, self.gp.predict(np.reshape(next_sample, (-1, n_params)), return_cov=False)]
 
-                neg_improvement_at_selected_point = self.negative_expected_improvement(next_sample, y, n_params)
-                acquisition = [next_sample, neg_improvement_at_selected_point]
+                acquisition = self.acquisition_function(next_sample, y, n_params, self.policy)
+
+                acquired_point = [next_sample, acquisition]
 
                 plot_progress(i, evaluated_x_points, evaluated_y_points, X, y, y_posterior, sigma, selected_point,
-                              neg_expected_improvements, acquisition)
+                              acquisitions, acquired_point, prefix=self.policy + "_")
             # -------------------------------------------------------------------------------------------- #
 
             if np.any(np.abs(next_sample - X) <= self.epsilon):
@@ -186,6 +221,15 @@ class BayesianOptimization1dDemo(object):
             y = np.array(y_list)
 
         return X, y
+
+    def acquisition_function(self, X, y, n_params, policy):
+
+        if policy == 'ei':
+            return self.negative_expected_improvement(X, y, n_params)
+        elif self.policy == 'ucb':
+            return self.negative_upper_confidence_bound(X, y, n_params)
+        else:
+            raise ValueError("unknown policy {0:}".format(self.policy))
 
     def negative_expected_improvement(self, X, y, n_params):
 
@@ -201,9 +245,22 @@ class BayesianOptimization1dDemo(object):
         Z = (mu - f_best) / sigma
         ei = (mu - f_best) * norm.cdf(Z) + sigma * norm.pdf(-Z)
         ei[sigma == 0.0] = 0.0
-        return -1 * ei
+        return -ei
 
-    def sample_next_hyperparameter(self, acquisition_function, y, n_restart):
+    def negative_upper_confidence_bound(self, X, y, n_params):
+
+        X = np.reshape(X, (-1, n_params))
+
+        mu, Sigma = self.gp.predict(X, return_cov=True)
+        sigma = np.sqrt(np.diag(Sigma))
+
+        mu = mu.ravel()
+        sigma = sigma.ravel()
+
+        ucb = mu + self.lambda_val * sigma
+        return -ucb
+
+    def sample_next_hyperparameter(self, acquisition_function, y, n_restart, policy):
 
         n_params = self.bounds.shape[0]
         best_x = None
@@ -214,7 +271,7 @@ class BayesianOptimization1dDemo(object):
                            x0=initial_value,
                            bounds=self.bounds,
                            method='L-BFGS-B',
-                           args=(y, n_params))
+                           args=(y, n_params, policy))
 
             if res.fun < best_acquisition_value:
                 best_acquisition_value = res.fun
@@ -224,7 +281,7 @@ class BayesianOptimization1dDemo(object):
 
 
 def plot_progress(iter_idx, evaluated_x_points, evaluated_y_points, X, y, y_posterior, sigma, selected_point,
-                  neg_expected_improvements, acquisition):
+                  acquisitions, acquired_point, prefix=''):
 
     import matplotlib
     import matplotlib.pyplot as plt
@@ -235,9 +292,9 @@ def plot_progress(iter_idx, evaluated_x_points, evaluated_y_points, X, y, y_post
     evaluated_x_points = evaluated_x_points.ravel()
     y_posterior = y_posterior.ravel()
 
-    FONTSIZE = 25
+    FONTSIZE = 23
     plt.close('all')
-    fig = plt.figure(figsize=(11, 16))  # horizontal, vertical
+    fig = plt.figure(figsize=(12, 16))  # horizontal, vertical
     gs = matplotlib.gridspec.GridSpec(2, 1)  # vertical, horizontal
 
     # plot function, GP posterior, and the optimal point
@@ -252,18 +309,16 @@ def plot_progress(iter_idx, evaluated_x_points, evaluated_y_points, X, y, y_post
     ax.set_xlabel('x', fontsize=FONTSIZE, labelpad=15)
     ax.set_ylabel('f(x)', fontsize=FONTSIZE, labelpad=15)
 
-    # plot the expected improvement
+    # plot the acquisition values
     ax = plt.subplot(gs[1, 0])
-    ax.plot(evaluated_x_points, neg_expected_improvements, linestyle='-', linewidth=1.5, color='k')
-    ax.scatter(acquisition[0], acquisition[1], label='Selected', marker="^", s=180, color='r')
+    ax.plot(evaluated_x_points, acquisitions, linestyle='-', linewidth=1.5, color='k')
+    ax.scatter(acquired_point[0], acquired_point[1], label='Selected', marker="^", s=180, color='r')
     adjustAxeProperties(ax, FONTSIZE, 0, FONTSIZE, 0)
     ax.set_xlabel('x', fontsize=FONTSIZE, labelpad=15)
-    ax.set_ylabel('Neg. expected improvements', fontsize=FONTSIZE, labelpad=15)
+    ax.set_ylabel('Acquisitions', fontsize=FONTSIZE, labelpad=15)
 
     plt.tight_layout(pad=0, w_pad=1.0, h_pad=2.0)
     fig.suptitle("Iteration: {0:}".format(iter_idx), fontsize=1.05*FONTSIZE)
     plt.subplots_adjust(top=0.93)
     fname = str(iter_idx).zfill(2)
-    plt.savefig("iteration_{0:}.png".format(fname), bbox_inches='tight')
-
-
+    plt.savefig(prefix + "iteration_{0:}.png".format(fname), bbox_inches='tight')
