@@ -72,7 +72,11 @@ class BayesianOptimization(object):
             X = np.atleast_2d(np.array(x_list))
             y = np.array(y_list)
 
-        return X, y
+        self.X_search = X
+        self.y_search = y
+
+    def optimal(self):
+        return self.X_search[np.argmax(self.y_search)], np.max(self.y_search)
 
     def acquisition_function(self, X, y, n_params, policy):
 
@@ -220,7 +224,11 @@ class BayesianOptimization1dDemo(object):
             X = np.atleast_2d(np.array(x_list))
             y = np.array(y_list)
 
-        return X, y
+            self.X_search = X
+            self.y_search = y
+
+    def optimal(self):
+        return self.X_search[np.argmax(self.y_search)], np.max(self.y_search)
 
     def acquisition_function(self, X, y, n_params, policy):
 
