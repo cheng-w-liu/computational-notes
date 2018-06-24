@@ -13,6 +13,10 @@ class GaussianProcess(object):
         self.optimizer = optimizer
         self.n_restart_optimizer = n_restart_optimizer
 
+    def clone(self):
+        cloned_kernel = self.kernel_.clone_with_param(self.kernel_.get_parameters()['length_scale'])
+        return GaussianProcess(cloned_kernel, self.alpha, self.optimizer, self.n_restart_optimizer)
+
     def fit(self, X, y):
 
         if len(X.shape) != 2:
