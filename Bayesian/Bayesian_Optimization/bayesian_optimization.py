@@ -25,6 +25,12 @@ class BayesianOptimization(object):
             kernel = RBFKernel(length_scale=length_scale, length_scale_bounds=bounds)
             self.gp = GaussianProcess(kernel, alpha=0.03)
 
+    def clone(self):
+        cloned_obj = BayesianOptimization(self.score_func, self.bounds, self.policy,
+                                          self.epsilon, self.lambda_val)
+        cloned_obj.gp = self.gp.clone()
+        return cloned_obj
+
     def fit(self, n_iter=10, x0=None, n_pre_samples=5, random_search=False):
         """
         Apply Bayesian Optimization to find the optimal parameter
@@ -77,6 +83,9 @@ class BayesianOptimization(object):
 
     def optimal(self):
         return self.X_search[np.argmax(self.y_search)], np.max(self.y_search)
+
+    def get_iteration_history(self):
+        return self.X_search, self.y_search
 
     def acquisition_function(self, X, y, n_params, policy):
 
@@ -200,6 +209,8 @@ class BayesianOptimization1dDemo(object):
             # -------------------------------------------------------------------------------------------- #
             # plotting info
             if i > 0:
+
+                # function values
                 y_posterior, Sigma = self.gp.predict(np.reshape(evaluated_x_points, (-1, n_params)), return_cov=True)
                 sigma = np.sqrt(np.diag(Sigma))
 
@@ -207,10 +218,12 @@ class BayesianOptimization1dDemo(object):
 
                 selected_point = [next_sample, self.gp.predict(np.reshape(next_sample, (-1, n_params)), return_cov=False)]
 
-                acquisition = self.acquisition_function(next_sample, y, n_params, self.policy)
+                # acquisition function values
+                #acquisition = self.acquisition_function(next_sample, y, n_params, self.policy)
+                #acquired_point = [next_sample, acquisition]
+                acquired_point = [next_sample, self.acquisition_function(next_sample, y, n_params, self.policy)]
 
-                acquired_point = [next_sample, acquisition]
-
+                # plot
                 plot_progress(i, evaluated_x_points, evaluated_y_points, X, y, y_posterior, sigma, selected_point,
                               acquisitions, acquired_point, prefix=self.policy + "_")
             # -------------------------------------------------------------------------------------------- #
