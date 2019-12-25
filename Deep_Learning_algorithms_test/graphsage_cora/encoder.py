@@ -49,17 +49,10 @@ class Encoder(nn.Module):
         neighbors = [self.adj_list[node] for node in nodes]
         neighbors_features = self.aggregator(neighbors, self.num_sample)  # shape: (numb_of_nodes, feat_dim)
 
-        print("neighbors_features:")
-        print(neighbors_features)
-
         features = torch.cat(
             tensors=(nodes_features[:], neighbors_features[:]),
             dim=1
         ) # shape: (numb_of_nodes, 2 * feat_dim)
-
-        print('\n')
-        print('combined features:')
-        print(features)
 
         h = F.relu(self.W_k(features)) # shape: (numb_of_nodes, embed_dim)
 
