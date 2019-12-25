@@ -5,6 +5,9 @@ import numpy as np
 
 
 class Aggregator(nn.Module):
+    """
+    Aggregate nodes' neighbors features
+    """
     def __init__(self, feature_map: nn.Embedding, agg_type='mean', gpu=False):
         """
         :param feature_map: a nn.Embedding object that maps indices to embedding vectors
@@ -43,6 +46,8 @@ class Aggregator(nn.Module):
 
     def _maxForward(self, neighbors: List[Set]) -> torch.Tensor:
         agg_neighbors_features = torch.zeros(len(neighbors), self.feat_dim)
+        if self.gpu:
+            agg_neighbors_features = agg_neighbors_features.cuda()
         for i, neigh in enumerate(neighbors):
             node_indices = torch.tensor(list(neigh), dtype=torch.long)
             n_features = self.feature_map(node_indices)  # shape (numb_of_neighbors, feat_dim)
@@ -64,7 +69,7 @@ class Aggregator(nn.Module):
             neighbors_features = neighbors_features.cuda()
 
         node2id = {n: i for i, n in enumerate(all_nodes)}
-        mask = torch.zeros(len(neighbors), len(all_nodes), dtype=torch.double)
+        mask = torch.zeros(len(neighbors), len(all_nodes), dtype=torch.float32)
         row_indices = [i for i in range(len(neighbors)) for _ in range(len(neighbors[i]))]
         col_indices = [node2id[n] for n_neighbors in neighbors for n in n_neighbors]
         mask[row_indices, col_indices] = 1
@@ -82,7 +87,8 @@ class Aggregator(nn.Module):
 
 def test_aggregator():
     custom_weights = np.array(
-        [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 0.0, 0.0]
+        [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 0.0, 0.0],
+        dtype=np.float32
     ).reshape(6, 2)
     V = 5
     feat_dim = 3
