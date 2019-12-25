@@ -72,7 +72,7 @@ def test_encoder():
         dtype=np.float32
     ).reshape(6, 2)
     V = 5
-    feat_dim = 3
+    feat_dim = 2
     embeddings = nn.Embedding(V+1, feat_dim, padding_idx=V)
     embeddings.weight = nn.Parameter(
         torch.tensor(custom_weights),
@@ -80,9 +80,9 @@ def test_encoder():
     )
     adj_list = [set([0, 2]), set([1, 3, 4]), set([3]), set([0, 1, 2]), set([3])]
 
-    agg = Aggregator(embeddings)
+    agg = Aggregator(embeddings, feat_dim)
 
-    embed_dim = 2
+    embed_dim = 3
     enc = Encoder(embeddings, agg, adj_list, embed_dim)
     h = enc([0, 1, 2])
 
