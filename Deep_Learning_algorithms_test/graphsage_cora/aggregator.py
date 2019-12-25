@@ -8,9 +8,9 @@ class Aggregator(nn.Module):
     """
     Aggregate nodes' neighbors features
     """
-    def __init__(self, feature_map: nn.Embedding, agg_type='mean', gpu=False):
+    def __init__(self, feature_map, feat_dim: int, agg_type: str='mean', gpu: bool=False):
         """
-        :param feature_map: a nn.Embedding object that maps indices to embedding vectors
+        :param feature_map: used to generate feature vectors for a list of inputs
         :param agg_type: either mean or max aggregator
         :param gpu: boolean, use GPU or not
         """
@@ -20,7 +20,7 @@ class Aggregator(nn.Module):
             raise ValueError(f'Expect agg_type to be "max" or "mean", but got : {agg_type}')
 
         self.feature_map = feature_map
-        self.feat_dim = feature_map.weight.shape[1]
+        self.feat_dim = feat_dim
         self.agg_type = agg_type
         self.gpu = gpu
 
@@ -45,7 +45,7 @@ class Aggregator(nn.Module):
 
 
     def _maxForward(self, neighbors: List[Set]) -> torch.Tensor:
-        agg_neighbors_features = torch.zeros(len(neighbors), self.feat_dim)
+        agg_neighbors_features = torch.zeros(len(neighbors), self.feat_dim, dtype=torch.float32)
         if self.gpu:
             agg_neighbors_features = agg_neighbors_features.cuda()
         for i, neigh in enumerate(neighbors):
@@ -91,7 +91,7 @@ def test_aggregator():
         dtype=np.float32
     ).reshape(6, 2)
     V = 5
-    feat_dim = 3
+    feat_dim = 2
     embeddings = nn.Embedding(V+1, feat_dim, padding_idx=V)
     embeddings.weight = nn.Parameter(
         torch.tensor(custom_weights),
@@ -100,12 +100,12 @@ def test_aggregator():
     neighbors = [set([0, 2]), set([1, 3, 4]), set([3])]
 
     print('mean aggregator:')
-    agg1 = Aggregator(embeddings)
+    agg1 = Aggregator(embeddings, feat_dim)
     print(agg1(neighbors))
     print('\n')
 
     print('max aggregator:')
-    agg2 = Aggregator(embeddings, 'max')
+    agg2 = Aggregator(embeddings, feat_dim, 'max')
     print(agg2(neighbors))
 
 

@@ -9,11 +9,11 @@ class Encoder(nn.Module):
     """
     Encodes a list of nodes to the embedding vectors
     """
-    def __init__(self, feature_map: nn.Embedding, aggregator: Aggregator, adj_list: List[Set],
+    def __init__(self, feature_map, aggregator: Aggregator, adj_list: List[Set],
                  embed_dim: int, base_model = None,
                  num_sample: int = 10, gpu: bool = False):
         """
-        :param feature_map: used to map indices to embedding vectors
+        :param feature_map: used to generate feature vectors for a list of inputs
         :param aggregator: used to aggregate neighbors' features
         :param adj_list: adjacency list, each entry is a set of neighbors of a given node
         :param embed_dim: int, embedding dimension
