@@ -1,6 +1,5 @@
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
 from typing import List, Set
 import numpy as np
 
@@ -48,7 +47,7 @@ class Aggregator(nn.Module):
         for i, neigh in enumerate(neighbors):
             node_indices = torch.tensor(list(neigh), dtype=torch.long)
             n_features = self.feature_map(node_indices)  # shape (numb_of_neighbors, feat_dim)
-            agg_neighbors_features[i, :] = torch.max(n_features, dim=0)
+            agg_neighbors_features[i, :] = torch.max(n_features, dim=0)[0]  # note that max returns a value-index tuple
         return agg_neighbors_features
 
 
@@ -62,7 +61,7 @@ class Aggregator(nn.Module):
 
         node_indices = torch.tensor(all_nodes, dtype=torch.long)
         neighbors_features = self.feature_map(node_indices)
-        if self.cuda:
+        if self.gpu:
             neighbors_features = neighbors_features.cuda()
 
         node2id = {n: i for i, n in enumerate(all_nodes)}
@@ -70,7 +69,7 @@ class Aggregator(nn.Module):
         row_indices = [i for i in range(len(neighbors)) for _ in range(len(neighbors[i]))]
         col_indices = [node2id[n] for n_neighbors in neighbors for n in n_neighbors]
         mask[row_indices, col_indices] = 1
-        if self.cuda:
+        if self.gpu:
             mask = mask.cuda()
 
         num_neigh = torch.sum(mask, 1).unsqueeze(dim=1)
@@ -80,8 +79,12 @@ class Aggregator(nn.Module):
 
         return agg_neighbors_features
 
+
+
 def test_aggregator():
-    custom_weights = np.array([0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 0.0, 0.0]).reshape(6, 2)
+    custom_weights = np.array(
+        [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 0.0, 0.0]
+    ).reshape(6, 2)
     V = 5
     feat_dim = 3
     embeddings = nn.Embedding(V+1, feat_dim, padding_idx=V)
@@ -89,10 +92,17 @@ def test_aggregator():
         torch.tensor(custom_weights),
         requires_grad=False
     )
-    agg = Aggregator(embeddings)
     neighbors = [set([0, 2]), set([1, 3, 4]), set([3])]
-    agg_neighbors_features = agg(neighbors)
-    print(agg_neighbors_features)
+
+    print('mean aggregator:')
+    agg1 = Aggregator(embeddings)
+    print(agg1(neighbors))
+    print('\n')
+
+    print('max aggregator:')
+    agg2 = Aggregator(embeddings, 'max')
+    print(agg2(neighbors))
+
 
 if __name__ == '__main__':
     test_aggregator()
