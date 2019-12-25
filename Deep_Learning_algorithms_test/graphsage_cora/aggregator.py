@@ -7,10 +7,9 @@ import numpy as np
 class Aggregator(nn.Module):
     def __init__(self, feature_map: nn.Embedding, agg_type='mean', gpu=False):
         """
-        :param feature_map:
-        :param feat_dim:
-        :param agg_type:
-        :param gpu:
+        :param feature_map: a nn.Embedding object that maps indices to embedding vectors
+        :param agg_type: either mean or max aggregator
+        :param gpu: boolean, use GPU or not
         """
         super(Aggregator, self).__init__()
 
