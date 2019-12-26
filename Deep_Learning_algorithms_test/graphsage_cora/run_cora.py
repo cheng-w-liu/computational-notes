@@ -146,6 +146,7 @@ def main():
         print(f'name: {name}, shape:{param.shape}')
     print('-'*30)
 
+    # start training
     rand_indices = np.random.permutation(num_nodes)
     test_size = 1000
     val_size = 500
@@ -182,12 +183,14 @@ def main():
         optimizer.step()
         end_time = time.time()
         time_elapsed = end_time - start_time
-        #print(time_elapsed)
-        #print(batch_idx, batch_loss.item())
         print(f'batch: {batch_idx}, training time: {time_elapsed:.6f}, batch_losss: {batch_loss.item():.5f}')
     print('-'*30)
     val_output = model.forward(val)
     print("Validation F1:", f1_score(labels[val], val_output.data.numpy().argmax(axis=1), average="micro"))
+
+    test_output = model.forward(test)
+    print("Test F1:", f1_score(labels[test], test_output.data.numpy().argmax(axis=1), average="micro"))
+
 
 if __name__ == '__main__':
     main()
