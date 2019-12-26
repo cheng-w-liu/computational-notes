@@ -63,7 +63,7 @@ def test_graphsage():
     agg = Aggregator(embeddings, feat_dim)
 
     embed_dim = 3
-    enc = Encoder(embeddings, agg, adj_list, embed_dim)
+    enc = Encoder(embeddings, feat_dim, agg, adj_list, embed_dim)
 
     graphsage = GraphSAGEclassifier(2, enc)
     print('parameters:')
