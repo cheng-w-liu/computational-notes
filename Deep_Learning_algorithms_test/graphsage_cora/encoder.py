@@ -3,13 +3,13 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from typing import List, Set
+from typing import List
 
 class Encoder(nn.Module):
     """
     Encodes a list of nodes to the embedding vectors
     """
-    def __init__(self, feature_map, aggregator: Aggregator, adj_list: List[Set],
+    def __init__(self, feature_map, feat_dim: int, aggregator: Aggregator, adj_list,
                  embed_dim: int, base_model = None,
                  num_sample: int = 10, gpu: bool = False):
         """
@@ -23,7 +23,7 @@ class Encoder(nn.Module):
         super(Encoder, self).__init__()
 
         self.feature_map = feature_map
-        self.feat_dim = feature_map.weight.shape[1]
+        self.feat_dim = feat_dim
         self.aggregator = aggregator
         self.aggregator.gpu = gpu
         self.adj_list = adj_list
@@ -76,7 +76,7 @@ def test_encoder():
     agg = Aggregator(embeddings, feat_dim)
 
     embed_dim = 3
-    enc = Encoder(embeddings, agg, adj_list, embed_dim)
+    enc = Encoder(embeddings, feat_dim, agg, adj_list, embed_dim)
     h = enc([0, 1, 2])
 
 
