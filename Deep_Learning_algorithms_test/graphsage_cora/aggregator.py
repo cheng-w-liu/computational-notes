@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 from typing import List, Set
 import numpy as np
+import random
 
 
 class Aggregator(nn.Module):
@@ -33,7 +34,7 @@ class Aggregator(nn.Module):
                 shape: (numb_of_nodes, feat_dim)
         """
         if num_sample is not None:
-            sampled_neighbors = [set(np.random.choice(neigh, num_sample))
+            sampled_neighbors = [set(random.sample(neigh, num_sample))
                                  if len(neigh) > num_sample else neigh for neigh in neighbors]
         else:
             sampled_neighbors = neighbors
@@ -101,7 +102,7 @@ def test_aggregator():
 
     print('mean aggregator:')
     agg1 = Aggregator(embeddings, feat_dim)
-    print(agg1(neighbors))
+    print(agg1(neighbors, num_sample=1))
     print('\n')
 
     print('max aggregator:')
