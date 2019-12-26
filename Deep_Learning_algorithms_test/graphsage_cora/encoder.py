@@ -36,6 +36,7 @@ class Encoder(nn.Module):
             out_features=self.embed_dim
         )
 
+
     def forward(self, nodes: List[int]) -> torch.Tensor:
         """
         :param nodes: a batch of nodes
@@ -46,7 +47,7 @@ class Encoder(nn.Module):
         )  # shape: (numb_of_nodes, feat_dim)
         if self.gpu:
             nodes_features = nodes_features.cuda()
-        neighbors = [self.adj_list[node] for node in nodes]
+        neighbors = [self.adj_list[int(node)] for node in nodes]  # very important to use int(node)! as node is a tensor
         neighbors_features = self.aggregator(neighbors, self.num_sample)  # shape: (numb_of_nodes, feat_dim)
 
         features = torch.cat(
