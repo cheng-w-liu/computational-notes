@@ -78,6 +78,7 @@ def test_encoder():
     embed_dim = 3
     enc = Encoder(embeddings, feat_dim, agg, adj_list, embed_dim)
     h = enc([0, 1, 2])
+    print(h)
 
 
 if __name__ == '__main__':
