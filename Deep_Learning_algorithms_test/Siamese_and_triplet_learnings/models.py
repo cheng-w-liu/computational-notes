@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from typing import Tuple
 
 
 class EmbeddingNet(nn.Module):
@@ -66,14 +67,31 @@ class ClassificationNet(nn.Module):
         super(ClassificationNet, self).__init__()
         self.embedding_net = embedding_net
         self.n_classes = n_classes
-        self.non_linear = nn.PReLU()
+        self.nonlinear = nn.PReLU()
         self.fc = nn.Linear(in_features=2, out_features=n_classes)
 
 
     def forward(self, x: torch.tensor) -> torch.tensor:
         output = self.embedding_net(x)
-        output = self.non_linear(output)
+        output = self.nonlinear(output)
         logits = F.log_softmax(self.fc(output), dim=1)
         # logits to be evaluated using NLLLoss
         return logits
 
+    def get_embedding(self, x: torch.tensor) -> torch.tensor:
+        return self.nonlinear(self.embedding_net(x))
+
+
+class SiameseNet(nn.Module):
+
+    def __init__(self, embedding_net: nn.Module):
+        super(SiameseNet, self).__init__()
+        self.embedding_net = embedding_net
+
+    def forward(self, x1: torch.tensor, x2: torch.tensor) -> Tuple[torch.tensor, torch.tensor]:
+        embeddings1 = self.embedding_net(x1)
+        embeddings2 = self.embedding_net(x2)
+        return (embeddings1, embeddings2)
+
+    def get_embedding(self, x: torch.tensor) -> torch.tensor:
+        return self.embedding_net(x)
