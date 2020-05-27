@@ -13,8 +13,9 @@ def fit(model: nn.Module, optimizer, scheduler, loss_func, train_dataloader, tes
     valid_losses = []
     valid_metrics = []
 
-    for epoch_idx in range(0, start_epoch):
-        scheduler.step()
+    if scheduler:
+        for epoch_idx in range(0, start_epoch):
+            scheduler.step()
 
     for epoch_idx in range(1, epochs+1):
 
@@ -32,7 +33,8 @@ def fit(model: nn.Module, optimizer, scheduler, loss_func, train_dataloader, tes
             message += f'\t Average {metric.name()}: {metric.value()}'
             valid_metrics.append(metric.value())
 
-        scheduler.step()
+        if scheduler:
+            scheduler.step()
 
         print(message)
         print('\n ----- \n')
