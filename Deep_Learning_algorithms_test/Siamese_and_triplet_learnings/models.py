@@ -6,7 +6,7 @@ from typing import Tuple
 
 class EmbeddingNet(nn.Module):
 
-    def __init__(self):
+    def __init__(self, embedding_dim=2):
         """
              n x n    *    f x f     ===>  floor( (n + 2p -f) / s ) + 1  x  floor( (n + 2p -f) / s) + 1
            padding p      stride s
@@ -46,8 +46,10 @@ class EmbeddingNet(nn.Module):
             nn.PReLU(),
             nn.Linear(in_features=256, out_features=256),
             nn.PReLU(),
-            nn.Linear(in_features=256, out_features=2)
+            nn.Linear(in_features=256, out_features=embedding_dim)
         )
+
+        self.embedding_dim = embedding_dim
 
 
     def forward(self, x: torch.tensor) -> torch.tensor:
@@ -95,3 +97,25 @@ class SiameseNet(nn.Module):
 
     def get_embedding(self, x: torch.tensor) -> torch.tensor:
         return self.embedding_net(x)
+
+
+class SiameseNet2(nn.Module):
+
+    def __init__(self, embedding_net: EmbeddingNet):
+        super(SiameseNet2, self).__init__()
+        self.embedding_net = embedding_net
+        self.nonlinear = nn.PReLU()
+        self.fc = nn.Linear(in_features=2, out_features=embedding_net.embedding_dim)
+
+    def forward(self, x1: torch.tensor, x2: torch.tensor) -> torch.tensor:
+        embeddings1 = self.embedding_net(x1)
+        embeddings2 = self.embedding_net(x2)
+        d = (embeddings1 - embeddings2).abs()
+        output = self.fc(self.nonlinear(d))
+        log_probs = F.log_softmax(self.fc(output), dim=1)
+        # log_probs to be evaluated using NLLLoss
+        return log_probs
+
+    def get_embedding(self, x: torch.tensor) -> torch.tensor:
+        return self.embedding_net(x)
+
