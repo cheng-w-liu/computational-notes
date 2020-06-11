@@ -15,3 +15,16 @@ class ContrastiveLoss(nn.Module):
         loss = 0.5 * target.float() * distances + \
                0.5 * (1. - target.float()) * F.relu(self.margin - distances)
         return loss.mean()
+
+
+class TripletLoss(nn.Module):
+
+    def __init__(self, margin):
+        super(TripletLoss, self).__init__()
+        self.margin = margin
+
+    def forward(self, anchor, positive, negative):
+        distances_positive = (anchor - positive).pow(2).sum(dim=1)
+        distances_negative = (anchor - negative).pow(2).sum(dim=1)
+        losses = F.relu(self.margin + distances_positive - distances_negative)
+        return losses.mean()
