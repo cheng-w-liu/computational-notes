@@ -23,14 +23,14 @@ def fit(model: nn.Module, optimizer, scheduler, loss_func, train_dataloader, tes
         train_losses.append(train_epoch_loss)
         message = f'Epoch: {epoch_idx}/{epochs}. Train set: Average loss {train_epoch_loss:.3f}'
         for metric in metrics:
-            message += f'\t Average {metric.name()}: {metric.value()}'
+            message += f'\t Average {metric.name()}:\n {metric.value()}'
             train_metrics.append(metric.value())
 
         valid_epoch_loss = test_epoch(model, loss_func, test_dataloader, metrics, device)
         valid_losses.append(valid_epoch_loss)
         message += f'\nEpoch: {epoch_idx}/{epochs}. Valid. set: Average loss {valid_epoch_loss:.3f}'
         for metric in metrics:
-            message += f'\t Average {metric.name()}: {metric.value()}'
+            message += f'\t Average {metric.name()}:\n {metric.value()}'
             valid_metrics.append(metric.value())
 
         if scheduler:
@@ -54,13 +54,20 @@ def train_epoch(model, optimizer, loss_func, train_dataloader, metrics, device, 
     train_loss = 0.
 
     for batch_idx, (data, targets) in enumerate(train_dataloader):
+        if not type(data) in (list, tuple):
+            data = (data,)
         if device == 'cuda':
-            data = data.to(device)
+            data = tuple(d.to(device) for d in data)
             targets = targets.to(device)
 
         optimizer.zero_grad()
-        logits = model(data)
-        batch_loss = loss_func(logits, targets)
+        outputs = model(*data)
+
+        if not type(outputs) in (list, tuple):
+            outputs = (outputs,)
+        loss_inputs = outputs + (targets,)
+
+        batch_loss = loss_func(*loss_inputs)
         batch_loss.backward()
         optimizer.step()
 
@@ -68,14 +75,14 @@ def train_epoch(model, optimizer, loss_func, train_dataloader, metrics, device, 
         losses.append(batch_loss.item())
 
         for metric in metrics:
-            metric(logits, targets, batch_loss)
+            metric(outputs, targets)
 
         if batch_idx % log_every == 0:
-            batch_size = data.size(0)
+            batch_size = data[0].size(0)
             n = len(train_dataloader.dataset)
             message = f'Train: {(batch_idx+1)*batch_size}/{n}, ({100. * (batch_idx+1) / len(train_dataloader) :.1f}%\tLoss: {np.mean(losses):.3f})'
             for metric in metrics:
-                message += f'\t {metric.name()}: {metric.value():.2f}'
+                message += f'\t {metric.name()}:\n {metric.value()}'
 
             print(message)
             losses = []
@@ -94,18 +101,43 @@ def test_epoch(model, loss_func, test_dataloader, metrics, device):
     test_loss = 0.
     with torch.no_grad():
         for batch_idx, (data, targets) in enumerate(test_dataloader):
+            if not type(data) in (list, tuple):
+                data = (data,)
             if device == 'cuda':
-                data = data.to(device)
+                data = tuple(d.to(device) for d in data)
                 targets = targets.to(device)
 
-            logits = model(data)
-            batch_loss = loss_func(logits, targets)
+            outputs = model(*data)
+            if not type(outputs) in (list, tuple):
+                outputs = (outputs,)
+            loss_inputs = outputs + (targets,)
+
+            batch_loss = loss_func(*loss_inputs)
             test_loss += batch_loss.item()
             losses.append(batch_loss.item())
 
             for metric in metrics:
-                metric(logits, targets, batch_loss)
+                metric(outputs, targets)
 
     test_loss /= float(len(test_dataloader))
     return test_loss
 
+
+def evaluate_precision_recall(model, dataloader, metric, device):
+
+    metric.reset()
+
+    model.eval()
+    with torch.no_grad():
+        for batch_idx, (data, targets) in enumerate(dataloader):
+            if not type(data) in (list, tuple):
+                data = (data,)
+            if device == 'cuda':
+                data = tuple(d.to(device) for d in data)
+                targets = targets.to(device)
+
+            outputs = model(*data)
+            if not type(outputs) in (list, tuple):
+                outputs = (outputs,)
+
+            metric(outputs, targets)
