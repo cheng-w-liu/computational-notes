@@ -81,7 +81,7 @@ class SiameseMNISTDataset(Dataset):
         else:  # self.train == False
             img1 = self.test_data[self.test_pairs[index][0]]
             img2 = self.test_data[self.test_pairs[index][1]]
-            target = self.test_pairs[index[2]]
+            target = self.test_pairs[index][2]
 
         img1 = Image.fromarray(img1.numpy(), mode='L')
         img2 = Image.fromarray(img2.numpy(), mode='L')
