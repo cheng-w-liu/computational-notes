@@ -119,3 +119,19 @@ class SiameseNet2(nn.Module):
     def get_embedding(self, x: torch.tensor) -> torch.tensor:
         return self.embedding_net(x)
 
+
+class SiameseNetTriplet(nn.Module):
+
+    def __init__(self, embedding_net: EmbeddingNet):
+        super(SiameseNetTriplet, self).__init__()
+        self.embedding_net = embedding_net
+
+    def forward(self, x_anchor: torch.tensor, x_positive: torch.tensor, x_negative: torch.tensor) -> \
+            Tuple[torch.tensor, torch.tensor, torch.tensor]:
+        embeddings_anchor = self.embedding_net(x_anchor)
+        embeddings_positive = self.embedding_net(x_positive)
+        embeddings_negative = self.embedding_net(x_negative)
+        return (embeddings_anchor, embeddings_positive, embeddings_negative)
+
+    def get_embedding(self, x: torch.tensor) -> torch.tensor:
+        return self.embedding_net(x)
