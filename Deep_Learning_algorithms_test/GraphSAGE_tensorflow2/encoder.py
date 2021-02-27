@@ -35,7 +35,7 @@ def test_encoder():
     nodes_embed = tf.random.normal(shape=(n, feat_dim))
     neighs_embed = tf.random.normal(shape=(n, feat_dim))
 
-    encoder = Encoder(feat_dim, output_dim)
+    encoder = Encoder(2*feat_dim, output_dim)
 
     encoder_inputs = (nodes_embed, neighs_embed)
     embed = encoder(encoder_inputs)
